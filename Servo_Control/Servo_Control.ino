@@ -40,6 +40,7 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 // our servo # counter
 uint8_t servonum = 0;
 
+
 void setup() {
   Serial.begin(9600);
   Serial.println("8 channel Servo test!");
@@ -61,7 +62,8 @@ void setup() {
    * affects the calculations for the PWM update frequency. 
    * Failure to correctly set the int.osc value will cause unexpected PWM results
    */
-  pwm.setOscillatorFrequency(27000000);
+  pwm.setOscillatorFrequency(25300000); // Analog servos run at ~50 Hz updates
+
   pwm.setPWMFreq(SERVO_FREQ);  // Analog servos run at ~50 Hz updates
 
   delay(10);
@@ -72,8 +74,10 @@ void setup() {
 void setServoPulse(uint8_t n, double pulse) {
   double pulselength;
   
+
+
   pulselength = 1000000;   // 1,000,000 us per second
-  pulselength /= SERVO_FREQ;   // Analog servos run at ~60 Hz updates
+  pulselength /= SERVO_FREQ;   // Analog servos run at ~50 Hz updates
   Serial.print(pulselength); Serial.println(" us per period"); 
   pulselength /= 4096;  // 12 bits of resolution
   Serial.print(pulselength); Serial.println(" us per bit"); 
@@ -83,22 +87,19 @@ void setServoPulse(uint8_t n, double pulse) {
   pwm.setPWM(n, 0, pulse);
 }
 
+int pmw = 150;
+
 void loop() {
-    pwm.setPWM(0, 0, 125);
-    int pulse1 = 100;
-    Serial.print("125");
+    
+    pwm.setPWM(0, 0, pmw); // set servo angle to 0 degrees
+    pwm.setPWM(1, 0, pmw); // set servo angle to 0 degrees
+    
+    Serial.println(pmw);
     Serial.print("\n");
-    delay(5000);
 
-    pwm.setPWM(0, 0, 264);
-    int pulse2 = 250;
-    Serial.print("264");
-    Serial.print("\n");
-    delay(5000);
+    pmw = pmw + 150;
 
-    pwm.setPWM(0, 0, 400);
-    int pulse3 = 400;
-    Serial.print("400");
-    Serial.print("\n");
-    delay(5000);
+    if (pmw > 450){pmw = 150;}
+    delay(2000); // wait for 5 sec
+
 }
