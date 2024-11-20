@@ -109,6 +109,10 @@ void loop() {
     Serial.println(pmw);
     Serial.print("\n");
 
+
+
+    /*
+
     if(half == true)
     {
       pmw = pmw - 5;
@@ -128,6 +132,11 @@ void loop() {
     {
       half = false;
     }
-    
+
+    */
+
+   pmw = 300;
+
+
     delay(100); // wait for 5 sec
 }

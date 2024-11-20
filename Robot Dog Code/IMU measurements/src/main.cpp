@@ -8,18 +8,21 @@ Adafruit_MPU6050 mpu;
 
 void setup(void) {
   Serial.begin(9600);
+  
   while (!Serial)
     delay(10); // will pause Zero, Leonardo, etc until serial console opens
 
   Serial.println("Adafruit MPU6050 test!");
 
   // Try to initialize!
-  if (!mpu.begin()) {
-    Serial.println("Failed to find MPU6050 chip");
+  if (!mpu.begin()) 
+  {
+    Serial.println("Failed to find MPU6050 chip"); 
     while (1) {
       delay(10);
     }
   }
+
   Serial.println("MPU6050 Found!");
 
   mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
@@ -38,7 +41,8 @@ void setup(void) {
     Serial.println("+-16G");
     break;
   }
-  mpu.setGyroRange(MPU6050_RANGE_500_DEG);
+
+  mpu.setGyroRange(MPU6050_RANGE_250_DEG);
   Serial.print("Gyro range set to: ");
   switch (mpu.getGyroRange()) {
   case MPU6050_RANGE_250_DEG:
@@ -53,7 +57,7 @@ void setup(void) {
   case MPU6050_RANGE_2000_DEG:
     Serial.println("+- 2000 deg/s");
     break;
-  }
+  } 
 
   mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
   Serial.print("Filter bandwidth set to: ");
