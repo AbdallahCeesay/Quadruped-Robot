@@ -1,117 +1,125 @@
-// Basic demo for accelerometer readings from Adafruit MPU6050
-
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
+#include <iostream>
+#include <cmath>
+
+using namespace std;
 
 Adafruit_MPU6050 mpu;
+const float Alpha = 0.1;
 
-void setup(void) {
-  Serial.begin(115200);
-  while (!Serial)
-    delay(10); // will pause Zero, Leonardo, etc until serial console opens
+/* Time tracking variables */
+unsigned long previous_time = 0; // previous timestamp in microseconds
+float dt = 0.0;                  // time step in seconds
 
-  Serial.println("Adafruit MPU6050 test!");
+/* Bias variables (to be calibrated manually or computed) */
+float gyro_x_bias = 0.0;
+float gyro_y_bias = 0.0;
+float gyro_z_bias = 0.0;
 
-  // Try to initialize!
-  if (!mpu.begin()) {
-    Serial.println("Failed to find MPU6050 chip");
-    while (1) {
-      delay(10);
+/* Filtered roll and pitch estimates */
+float filteredRoll = 0.0; // phi_hat
+float filteredPitch = 0.0; // theta_hat
+
+// Function prototype for calibrateGyro
+void calibrateGyro();
+
+void setup() {
+    Serial.begin(9600);
+
+    while (!Serial)
+        delay(10);
+    Serial.println("Adafruit MPU6050 test!");
+
+    if (!mpu.begin()) {
+        Serial.println("Failed to find MPU6050 chip");
+        while (1) { delay(10); }
     }
-  }
-  Serial.println("MPU6050 Found!");
+    Serial.println("MPU6050 Found!");
 
-  mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
-  Serial.print("Accelerometer range set to: ");
-  switch (mpu.getAccelerometerRange()) {
-  case MPU6050_RANGE_2_G:
-    Serial.println("+-2G");
-    break;
-  case MPU6050_RANGE_4_G:
-    Serial.println("+-4G");
-    break;
-  case MPU6050_RANGE_8_G:
-    Serial.println("+-8G");
-    break;
-  case MPU6050_RANGE_16_G:
-    Serial.println("+-16G");
-    break;
-  }
-  mpu.setGyroRange(MPU6050_RANGE_500_DEG);
-  Serial.print("Gyro range set to: ");
-  switch (mpu.getGyroRange()) {
-  case MPU6050_RANGE_250_DEG:
-    Serial.println("+- 250 deg/s");
-    break;
-  case MPU6050_RANGE_500_DEG:
-    Serial.println("+- 500 deg/s");
-    break;
-  case MPU6050_RANGE_1000_DEG:
-    Serial.println("+- 1000 deg/s");
-    break;
-  case MPU6050_RANGE_2000_DEG:
-    Serial.println("+- 2000 deg/s");
-    break;
-  }
+    /* MPU6050 configurations */
+    mpu.setAccelerometerRange(MPU6050_RANGE_2_G);
+    mpu.setCycleRate(MPU6050_CYCLE_20_HZ);
+    mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);          // DLPF
+    mpu.setGyroRange(MPU6050_RANGE_250_DEG);
 
-  mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
-  Serial.print("Filter bandwidth set to: ");
-  switch (mpu.getFilterBandwidth()) {
-  case MPU6050_BAND_260_HZ:
-    Serial.println("260 Hz");
-    break;
-  case MPU6050_BAND_184_HZ:
-    Serial.println("184 Hz");
-    break;
-  case MPU6050_BAND_94_HZ:
-    Serial.println("94 Hz");
-    break;
-  case MPU6050_BAND_44_HZ:
-    Serial.println("44 Hz");
-    break;
-  case MPU6050_BAND_21_HZ:
-    Serial.println("21 Hz");
-    break;
-  case MPU6050_BAND_10_HZ:
-    Serial.println("10 Hz");
-    break;
-  case MPU6050_BAND_5_HZ:
-    Serial.println("5 Hz");
-    break;
-  }
+    /* Time tracking initialization */
+    previous_time = micros();
 
-  Serial.println("");
-  delay(100);
+    /* Calibrate gyro biases (stationary IMU required for this step) */
+    calibrateGyro();
 }
 
 void loop() {
+    /* Get the current time */
+    unsigned long current_time = micros();
 
-  /* Get new sensor events with the readings */
-  sensors_event_t a, g, temp;
-  mpu.getEvent(&a, &g, &temp);
+    /* Calculate the time step in seconds */
+    dt = (current_time - previous_time) / 1000000.0;
 
-  /* Print out the values */
-  Serial.print("Acceleration X: ");
-  Serial.print(a.acceleration.x);
-  Serial.print(", Y: ");
-  Serial.print(a.acceleration.y);
-  Serial.print(", Z: ");
-  Serial.print(a.acceleration.z);
-  Serial.println(" m/s^2");
+    /* Update the previous time */
+    previous_time = current_time;
 
-  Serial.print("Rotation X: ");
-  Serial.print(g.gyro.x);
-  Serial.print(", Y: ");
-  Serial.print(g.gyro.y);
-  Serial.print(", Z: ");
-  Serial.print(g.gyro.z);
-  Serial.println(" rad/s");
+    /* Get sensor readings */
+    sensors_event_t a, g, temp;
+    mpu.getEvent(&a, &g, &temp);
 
-  Serial.print("Temperature: ");
-  Serial.print(temp.temperature);
-  Serial.println(" degC");
+    /* Calculate angles from accelerometer (phi_hat_acc, theta_hat_acc) */
+    float rollAccel = atan2(a.acceleration.y, a.acceleration.z); // Roll (phi_hat_acc)
+    float pitchAccel = atan2(-a.acceleration.x, sqrt(a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z)); // Pitch (theta_hat_acc)
 
-  Serial.println("");
-  delay(500);
+    /* Correct gyro data for biases */
+    float p = g.gyro.x - gyro_x_bias; // Roll rate
+    float q = g.gyro.y - gyro_y_bias; // Pitch rate
+    float r = g.gyro.z - gyro_z_bias; // Yaw rate (not used in this example)
+
+    /* Calculate roll and pitch rate (phi_dot, theta_dot) */
+    float rollRate = p + sin(filteredRoll) * tan(filteredPitch) * q + cos(filteredRoll) * tan(filteredPitch) * r; // phi_dot
+    float pitchRate = cos(filteredRoll) * q - sin(filteredRoll) * r; // theta_dot
+
+    /* Update roll and pitch using complementary filter */
+    filteredRoll = (1 - Alpha) * (filteredRoll + rollRate * dt) + Alpha * rollAccel;
+    filteredPitch = (1 - Alpha) * (filteredPitch + pitchRate * dt) + Alpha * pitchAccel;
+
+    /* Convert to degrees for output */
+    float rollDegrees = filteredRoll * RAD_TO_DEG;
+    float pitchDegrees = filteredPitch * RAD_TO_DEG;
+
+
+    Serial.println("Roll: ");
+    Serial.print(rollDegrees);
+    Serial.println(" Pitch: ");
+    Serial.print(pitchDegrees);
+    Serial.println("");
+}
+
+/* Function to calibrate gyroscope biases */
+void calibrateGyro() {
+    Serial.println("Calibrating gyro biases...");
+    int numSamples = 200;
+    float xSum = 0, ySum = 0, zSum = 0;
+
+    for (int i = 0; i < numSamples; i++) {
+        sensors_event_t a, g, temp;
+        mpu.getEvent(&a, &g, &temp);
+
+        xSum += g.gyro.x;
+        ySum += g.gyro.y;
+        zSum += g.gyro.z;
+
+        delay(10); // Small delay between samples
+    }
+
+    gyro_x_bias = xSum / numSamples;
+    gyro_y_bias = ySum / numSamples;
+    gyro_z_bias = zSum / numSamples;
+
+    Serial.println("Gyro biases calibrated:");
+    Serial.print("X: ");
+    Serial.println(gyro_x_bias);
+    Serial.print("Y: ");
+    Serial.println(gyro_y_bias);
+    Serial.print("Z: ");
+    Serial.println(gyro_z_bias);
 }

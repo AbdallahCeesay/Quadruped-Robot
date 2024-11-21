@@ -7,7 +7,7 @@
 using namespace std;
 
 Adafruit_MPU6050 mpu;
-const float Alpha = 0.1;
+const float Alpha = 0.05;
 
 /* Time tracking variables */
 unsigned long previous_time = 0; // previous timestamp in microseconds
@@ -41,7 +41,7 @@ void setup() {
     /* MPU6050 configurations */
     mpu.setAccelerometerRange(MPU6050_RANGE_2_G);
     mpu.setCycleRate(MPU6050_CYCLE_20_HZ);
-    mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);
+    mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);  /* digital low pass filter */
     mpu.setGyroRange(MPU6050_RANGE_250_DEG);
 
     /* Time tracking initialization */
@@ -72,7 +72,7 @@ void loop() {
     /* Correct gyro data for biases */
     float p = g.gyro.x - gyro_x_bias; // Roll rate
     float q = g.gyro.y - gyro_y_bias; // Pitch rate
-    float r = g.gyro.z - gyro_z_bias; // Yaw rate (not used in this example)
+    float r = g.gyro.z - gyro_z_bias; // Yaw rate (not used in this code)
 
     /* Calculate roll and pitch rate (phi_dot, theta_dot) */
     float rollRate = p + sin(filteredRoll) * tan(filteredPitch) * q + cos(filteredRoll) * tan(filteredPitch) * r; // phi_dot
