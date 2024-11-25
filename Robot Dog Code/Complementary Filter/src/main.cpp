@@ -3,6 +3,18 @@
 #include <Wire.h>
 #include <iostream>
 #include <cmath>
+#include <Adafruit_PWMServoDriver.h>
+#include <SPI.H>
+
+Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
+#define SERVOMIN  150 // This is the 'minimum' pulse length count (out of 4096)
+#define SERVOMAX  600 // This is the 'maximum' pulse length count (out of 4096)
+#define USMIN  600 // This is the rounded 'minimum' microsecond length based on the minimum pulse of 150
+#define USMAX  2400 // This is the rounded 'maximum' microsecond length based on the maximum pulse of 600
+#define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
+
+// our servo # counter
+uint8_t servonum = 0;
 
 using namespace std;
 
@@ -26,7 +38,7 @@ float filteredPitch = 0.0; // theta_hat
 void calibrateGyro();
 
 void setup() {
-    Serial.begin(9600);
+    Serial.begin(115200);
 
     while (!Serial)
         delay(10);
@@ -49,7 +61,30 @@ void setup() {
 
     /* Calibrate gyro biases (stationary IMU required for this step) */
     calibrateGyro();
+
+    pwm.begin();
+    pwm.setOscillatorFrequency(25300000); // Analog servos run at ~50 Hz updates
+    pwm.setPWMFreq(SERVO_FREQ);  // Analog servos run at ~50 Hz updates
+    delay(10);
 }
+void setServoPulse(uint8_t n, double pulse) {
+  double pulselength;
+  
+
+
+  pulselength = 1000000;   // 1,000,000 us per second
+  pulselength /= SERVO_FREQ;   // Analog servos run at ~50 Hz updates
+  Serial.print(pulselength); Serial.println(" us per period"); 
+  pulselength /= 4096;  // 12 bits of resolution
+  Serial.print(pulselength); Serial.println(" us per bit"); 
+  pulse *= 1000000;  // convert input seconds to us
+  pulse /= pulselength;
+  Serial.println(pulse);
+  pwm.setPWM(n, 0, pulse);
+}
+
+const int pmw = 300;
+
 
 void loop() {
     /* Get the current time */
@@ -88,10 +123,32 @@ void loop() {
 
 
     Serial.print("Roll: ");
-    Serial.print(rollDegrees);
-    Serial.print(" Pitch: ");
     Serial.print(pitchDegrees);
+    Serial.print(" Pitch: ");
+    Serial.print(rollDegrees);
     Serial.println("");
+
+    int roation1 = pmw + pitchDegrees*2;
+    int roation2 = pmw - pitchDegrees*2;
+
+    
+    
+    
+    pwm.setPWM(4, 0, pmw); 
+    pwm.setPWM(5, 0, pmw); 
+    pwm.setPWM(6, 0, roation2 -10); 
+    pwm.setPWM(7, 0, pmw); 
+    pwm.setPWM(8, 0, pmw); 
+    pwm.setPWM(9, 0, roation2 +10); 
+    pwm.setPWM(10, 0, pmw +15); 
+    pwm.setPWM(11, 0, pmw); 
+    pwm.setPWM(12, 0, roation1 +10); 
+    pwm.setPWM(13, 0, pmw); 
+    pwm.setPWM(14, 0, pmw); 
+    pwm.setPWM(15, 0, roation1 -10); 
+
+    //delay(100); // wait for 5 sec
+    /**/
 }
 
 /* Function to calibrate gyroscope biases */

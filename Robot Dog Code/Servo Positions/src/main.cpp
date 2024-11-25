@@ -88,55 +88,14 @@ void setServoPulse(uint8_t n, double pulse) {
   pwm.setPWM(n, 0, pulse);
 }
 
-int pmw = 150;
+int pmw = 300;
 bool half = false;
 
 void loop() {
     
-    pwm.setPWM(0, 0, pmw); 
-    pwm.setPWM(1, 0, pmw); 
-    pwm.setPWM(2, 0, pmw); 
-    pwm.setPWM(3, 0, pmw); 
-    pwm.setPWM(4, 0, pmw); 
-    pwm.setPWM(5, 0, pmw); 
-    pwm.setPWM(6, 0, pmw); 
-    pwm.setPWM(7, 0, pmw); 
-    pwm.setPWM(8, 0, pmw); 
-    pwm.setPWM(9, 0, pmw); 
-    pwm.setPWM(10, 0, pmw); 
-    pwm.setPWM(11, 0, pmw); 
-    
-    Serial.println(pmw);
-    Serial.print("\n");
-
-
-
-    /*
-
-    if(half == true)
-    {
-      pmw = pmw - 5;
-    }
-
-    if (half == false)
-    { 
-      pmw = pmw + 5;
-    }
-
-    if (pmw == 450)
-    {
-      half = true;
-    }
-
-    if (pmw == 150)
-    {
-      half = false;
-    }
-
-    */
-
-   pmw = 300;
-
+    pwm.setPWM(15, 0, pmw); 
+    pwm.setPWM(14, 0, pmw); 
+    pwm.setPWM(13, 0, pmw); 
 
     delay(100); // wait for 5 sec
 }
