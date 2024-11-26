@@ -56,8 +56,6 @@ void setup() {
     mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);  /* digital low pass filter */
     mpu.setGyroRange(MPU6050_RANGE_250_DEG);
 
-    /* Time tracking initialization */
-    previous_time = micros();
 
     /* Calibrate gyro biases (stationary IMU required for this step) */
     calibrateGyro();
@@ -66,11 +64,12 @@ void setup() {
     pwm.setOscillatorFrequency(25300000); // Analog servos run at ~50 Hz updates
     pwm.setPWMFreq(SERVO_FREQ);  // Analog servos run at ~50 Hz updates
     delay(10);
+    
+    /* Time tracking initialization */
+    previous_time = micros();
 }
 void setServoPulse(uint8_t n, double pulse) {
   double pulselength;
-  
-
 
   pulselength = 1000000;   // 1,000,000 us per second
   pulselength /= SERVO_FREQ;   // Analog servos run at ~50 Hz updates
@@ -128,27 +127,22 @@ void loop() {
     Serial.print(rollDegrees);
     Serial.println("");
 
-    int roation1 = pmw + pitchDegrees*2;
-    int roation2 = pmw - pitchDegrees*2;
+    int rotation1 = pmw + pitchDegrees*2;
+    int rotation2 = pmw - pitchDegrees*2;
 
-    
-    
-    
     pwm.setPWM(4, 0, pmw); 
     pwm.setPWM(5, 0, pmw); 
-    pwm.setPWM(6, 0, roation2 -10); 
+    pwm.setPWM(6, 0, rotation2 -10); 
     pwm.setPWM(7, 0, pmw); 
     pwm.setPWM(8, 0, pmw); 
-    pwm.setPWM(9, 0, roation2 +10); 
+    pwm.setPWM(9, 0, rotation2 +10); 
     pwm.setPWM(10, 0, pmw +15); 
     pwm.setPWM(11, 0, pmw); 
-    pwm.setPWM(12, 0, roation1 +10); 
+    pwm.setPWM(12, 0, rotation1 +10); 
     pwm.setPWM(13, 0, pmw); 
     pwm.setPWM(14, 0, pmw); 
-    pwm.setPWM(15, 0, roation1 -10); 
+    pwm.setPWM(15, 0, rotation1 -10); 
 
-    //delay(100); // wait for 5 sec
-    /**/
 }
 
 /* Function to calibrate gyroscope biases */
