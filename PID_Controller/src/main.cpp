@@ -13,9 +13,9 @@ Adafruit_MPU6050 mpu;
 ComplementaryFilter filter;
 
 /* PID gains*/
-const float Kp = 5;
-const float Ki = 1;
-const float Kd = 0;
+const float Kp = 25;
+const float Ki = 10;
+const float Kd = 0.8;
  
 
 /* PID variables*/
@@ -69,16 +69,6 @@ void loop() {
     return; /*ignore this iteration of the loop*/
   }
 
-
-  // /*Simulate a sudden tilt */
-  // static unsigned long changeTime = 0;
-  // if (currentTime - changeTime > 2000) {
-  //     rollSetPoint = (rollSetPoint == 0) ? 10 : 0;  // Toggle between 0° and 10°
-  //     pitchSetPoint = (pitchSetPoint == 0) ? 5 : 0; // Toggle between 0° and 5°
-  //     changeTime = currentTime;
-  // }
-  
-
   /* get roll and pitch angles from the comp filter*/
   float roll, pitch;
   filter.update(mpu, roll, pitch);
@@ -127,8 +117,8 @@ void loop() {
   previousPitchError = pitchError;
 
   
-  Serial.print("rollPID: ");
+  Serial.print("roll: ");
   Serial.print(rollOutput);
-  Serial.print(" rollError: ");
-  Serial.println(rollError); 
+  Serial.print(" pitch: ");
+  Serial.println(pitchOutput); 
 }
