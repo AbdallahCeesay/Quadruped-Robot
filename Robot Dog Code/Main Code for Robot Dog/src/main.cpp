@@ -221,7 +221,7 @@ void loop() {
     pwm.setPWM(13, 0, pwm13); 
     pwm.setPWM(14, 0, pwm14); 
     delay(100);
-    };
+    
 
     /*this section is for the PID controller. Note that the code for the complimentary filter is embedded within 
     the code for the PID controller because the PID controller usese the complimentary filter as the feedback.
@@ -289,6 +289,7 @@ void loop() {
   Serial.print(rollOutput);
   Serial.print(" pitch: ");
   Serial.println(pitchOutput); 
+  };
 }
 
 
